@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { StatCards } from '@/components/stat-cards';
 import { ConsumptionCharts } from '@/components/consumption-charts';
 import { ReadingsTable } from '@/components/readings-table';
-
+import { ReadingForm } from '@/components/reading-form';
 import { InsightCard } from '@/components/insight-card';
 import { DailyVariationChart } from '@/components/daily-variation-chart';
 
@@ -23,13 +23,14 @@ export function Dashboard({ initialReadings }: DashboardProps) {
 
   return (
     <>
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 gap-4 my-4">
+        {/* <ReadingForm onNewReading={addReading} lastReadingValue={readings.length > 0 ? readings[readings.length - 1].value : 0} /> */}
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5 my-4">
         <StatCards readings={readings} costPerKwh={costPerKwh} setCostPerKwh={setCostPerKwh} />
         <InsightCard readings={readings} />
       </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-9">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-1 lg:grid-cols-9 my-4">
         <div className="lg:col-span-6">
           <ConsumptionCharts readings={readings} />
         </div>
@@ -37,7 +38,7 @@ export function Dashboard({ initialReadings }: DashboardProps) {
           <ReadingsTable readings={readings} />
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-4 my-4">
         <DailyVariationChart readings={readings} />
       </div>
     </>
