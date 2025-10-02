@@ -12,7 +12,7 @@ import {
 import type { Reading } from '@/lib/types';
 import { format } from 'date-fns';
 
-const SECRET_CODE = '2025'; // Hardcoded secret code
+const SECRET_CODE = '2025dd'; // Hardcoded secret code
 
 const ReadingSchema = z.object({
   id: z.string().optional(),
