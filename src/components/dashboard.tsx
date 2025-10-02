@@ -5,28 +5,40 @@ import { useState } from 'react';
 import { StatCards } from '@/components/stat-cards';
 import { ConsumptionCharts } from '@/components/consumption-charts';
 import { ReadingsTable } from '@/components/readings-table';
-import { ReadingForm } from '@/components/reading-form';
+
+import { InsightCard } from '@/components/insight-card';
+import { DailyVariationChart } from '@/components/daily-variation-chart';
 
 type DashboardProps = {
   initialReadings: ReadingWithConsumption[];
 };
 
 export function Dashboard({ initialReadings }: DashboardProps) {
-  const [readings] = useState<ReadingWithConsumption[]>(initialReadings);
+  const [readings, setReadings] = useState<ReadingWithConsumption[]>(initialReadings);
   const [costPerKwh, setCostPerKwh] = useState(0.15);
+
+  const addReading = (newReading: ReadingWithConsumption) => {
+    setReadings((prevReadings) => [...prevReadings, newReading].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+  };
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCards readings={readings} costPerKwh={costPerKwh} setCostPerKwh={setCostPerKwh} />
+      <div className="grid gap-4">
       </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
-        <div className="lg:col-span-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <StatCards readings={readings} costPerKwh={costPerKwh} setCostPerKwh={setCostPerKwh} />
+        <InsightCard readings={readings} />
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-9">
+        <div className="lg:col-span-6">
           <ConsumptionCharts readings={readings} />
         </div>
         <div className="lg:col-span-3">
           <ReadingsTable readings={readings} />
         </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4">
+        <DailyVariationChart readings={readings} />
       </div>
     </>
   );

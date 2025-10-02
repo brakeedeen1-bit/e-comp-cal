@@ -128,3 +128,37 @@ export function getChartData(readings: ReadingWithConsumption[], period: 'daily'
         Consumption: parseFloat(consumption.toFixed(2)),
     })).slice(-12); // Last 12 periods
 }
+
+export function getDailyConsumptionVariationData(readings: ReadingWithConsumption[]) {
+  if (readings.length < 2) {
+    return [];
+  }
+
+  const sortedReadings = [...readings].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const variationData = [];
+
+  for (let i = 1; i < sortedReadings.length; i++) {
+    const previousDay = sortedReadings[i - 1];
+    const currentDay = sortedReadings[i];
+
+    // Only calculate variation if readings are for consecutive days
+    // For simplicity, we'll assume `consumption` represents daily consumption
+    // and if the dates are not consecutive, it means a gap, so we skip
+    const currentDate = new Date(currentDay.date);
+    const previousDate = new Date(previousDay.date);
+
+    // This simplified check assumes each reading *is* a daily reading.
+    // If there can be multiple readings per day, a more complex aggregation would be needed first.
+    // Given the existing `getChartData` for 'daily' uses individual readings, we'll follow that pattern.
+    
+    // Check if the readings are from different days and consecutive
+    if (!isSameDay(currentDate, previousDate)) {
+      const variation = currentDay.consumption - previousDay.consumption;
+      variationData.push({
+        date: format(currentDate, 'MMM d'),
+        Variation: parseFloat(variation.toFixed(2)),
+      });
+    }
+  }
+  return variationData.slice(-30); // Show last 30 variations
+}
