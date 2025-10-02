@@ -48,30 +48,39 @@ export function ReadingsTable({ readings }: ReadingsTableProps) {
   const [secretCode, setSecretCode] = useState<string>('');
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState<boolean>(false);
   const [readingToDeleteId, setReadingToDeleteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null); // New state for delete error
 
   const handleInitiateDelete = (id: string) => {
     setReadingToDeleteId(id);
     setSecretCode(''); // Clear secret code on opening dialog
+    setDeleteError(null); // Clear any previous error
     setDeleteConfirmationOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
     if (readingToDeleteId) {
       const result = await deleteReading(readingToDeleteId, secretCode);
-      if (result.message === 'Incorrect secret code.') {
+      if (result.message && result.message !== 'Reading deleted successfully.') {
+        // Error case: display error within dialog and toast, do not close dialog
+        setDeleteError(result.message);
         toast({
           title: 'Error',
           description: result.message,
           variant: 'destructive',
         });
-      } else if (result.message) {
+      } else if (result.message === 'Reading deleted successfully.') {
+        // Success case: close dialog and show success toast
         toast({ title: 'Success', description: result.message });
         setDeleteConfirmationOpen(false);
         setReadingToDeleteId(null);
+        setDeleteError(null); // Clear error on success
       } else {
+        // Fallback for unexpected error, keep dialog open
+        const errorMessage = 'Failed to delete reading due to an unknown error.';
+        setDeleteError(errorMessage);
         toast({
           title: 'Error',
-          description: result.message || 'Failed to delete reading.',
+          description: errorMessage,
           variant: 'destructive',
         });
       }
@@ -114,7 +123,12 @@ export function ReadingsTable({ readings }: ReadingsTableProps) {
                           <FilePenLine className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
                         </Button>
-                        <AlertDialog open={deleteConfirmationOpen && readingToDeleteId === reading.id} onOpenChange={setDeleteConfirmationOpen}>
+                        <AlertDialog open={deleteConfirmationOpen && readingToDeleteId === reading.id} onOpenChange={(open) => {
+                            setDeleteConfirmationOpen(open);
+                            if (!open) { // Clear error when dialog closes
+                                setDeleteError(null);
+                            }
+                        }}>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleInitiateDelete(reading.id)}>
                               <Trash2 className="h-4 w-4" />
@@ -142,6 +156,7 @@ export function ReadingsTable({ readings }: ReadingsTableProps) {
                                   placeholder="Enter secret code"
                                 />
                               </div>
+                              {deleteError && <p className="text-sm text-destructive text-center">{deleteError}</p>}
                             </div>
                             <AlertDialogFooter>
                               <AlertDialogCancel onClick={() => setDeleteConfirmationOpen(false)}>Cancel</AlertDialogCancel>

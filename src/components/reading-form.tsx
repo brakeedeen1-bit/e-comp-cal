@@ -84,17 +84,41 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
   useEffect(() => {
     if (formState.message) {
       if (formState.errors) {
+        Object.keys(formState.errors).forEach((key) => {
+          form.setError(key as keyof z.infer<typeof readingSchema>, { message: formState.errors[key]![0] });
+        });
         toast({
           title: 'Error',
           description: formState.message,
           variant: 'destructive',
         });
-      } else {
+      } else if (formState.message === 'Incorrect secret code.' || formState.message.includes('less than the previous reading value') || formState.message.includes('already exists')) {
+          // Specific errors that should keep the dialog open and show a toast, possibly also set form error.
+          if (formState.message.includes('less than the previous reading value')) {
+              form.setError('value', { message: formState.message });
+          } else if (formState.message.includes('already exists')) {
+              form.setError('date', { message: formState.message });
+          }
+          toast({
+              title: 'Error',
+              description: formState.message,
+              variant: 'destructive',
+          });
+      } else if (formState.message.includes('Failed to')) {
+          // Generic server-side errors, keep dialog open
+          toast({
+              title: 'Error',
+              description: formState.message,
+              variant: 'destructive',
+          });
+      } 
+      else {
+        // Success case, close dialog
         toast({ title: 'Success', description: formState.message });
         handleClose();
       }
     }
-  }, [formState, toast]);
+  }, [formState, toast, form]);
 
   const handleClose = () => {
     if (onClose) {
@@ -142,7 +166,7 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
                 </Popover>
                 {/* Hidden input to ensure the date value is submitted with the form */}
                 <input type="hidden" {...field} value={field.value || ''} />
-                <FormMessage>{(formState.errors as any)?.date}</FormMessage>
+                <FormMessage>{form.formState.errors.date?.message || (formState.message.includes('already exists') ? formState.message : '')}</FormMessage>
               </FormItem>
             )}
           />
@@ -158,7 +182,7 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
                  <FormDescription>
                   Last reading: {lastReadingValue.toLocaleString()} kWh
                 </FormDescription>
-                <FormMessage>{(formState.errors as any)?.value}</FormMessage>
+                <FormMessage>{form.formState.errors.value?.message || (formState.message.includes('less than the previous reading value') ? formState.message : '')}</FormMessage>
               </FormItem>
             )}
           />
@@ -175,7 +199,7 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
                     <FormDescription>
                         Enter the secret code to add or update readings.
                     </FormDescription>
-                    <FormMessage>{(formState.errors as any)?.secretCode}</FormMessage>
+                    <FormMessage>{form.formState.errors.secretCode?.message || (formState.message === 'Incorrect secret code.' ? formState.message : '')}</FormMessage>
                 </FormItem>
             )}
         />
