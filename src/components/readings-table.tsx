@@ -35,7 +35,8 @@ import { useState } from 'react';
 import { ReadingForm } from './reading-form';
 import { format } from 'date-fns';
 import { ScrollArea } from './ui/scroll-area';
-
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 
 type ReadingsTableProps = {
   readings: ReadingWithConsumption[];
@@ -44,17 +45,36 @@ type ReadingsTableProps = {
 export function ReadingsTable({ readings }: ReadingsTableProps) {
   const { toast } = useToast();
   const [editingReading, setEditingReading] = useState<ReadingWithConsumption | null>(null);
+  const [secretCode, setSecretCode] = useState<string>('');
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState<boolean>(false);
+  const [readingToDeleteId, setReadingToDeleteId] = useState<string | null>(null);
 
-  const handleDelete = async (id: string) => {
-    const result = await deleteReading(id);
-    if (result.message) {
-      toast({ title: 'Success', description: result.message });
-    } else {
-      toast({
-        title: 'Error',
-        description: result.message || 'Failed to delete reading.',
-        variant: 'destructive',
-      });
+  const handleInitiateDelete = (id: string) => {
+    setReadingToDeleteId(id);
+    setSecretCode(''); // Clear secret code on opening dialog
+    setDeleteConfirmationOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (readingToDeleteId) {
+      const result = await deleteReading(readingToDeleteId, secretCode);
+      if (result.message === 'Incorrect secret code.') {
+        toast({
+          title: 'Error',
+          description: result.message,
+          variant: 'destructive',
+        });
+      } else if (result.message) {
+        toast({ title: 'Success', description: result.message });
+        setDeleteConfirmationOpen(false);
+        setReadingToDeleteId(null);
+      } else {
+        toast({
+          title: 'Error',
+          description: result.message || 'Failed to delete reading.',
+          variant: 'destructive',
+        });
+      }
     }
   };
   
@@ -94,9 +114,9 @@ export function ReadingsTable({ readings }: ReadingsTableProps) {
                           <FilePenLine className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
                         </Button>
-                        <AlertDialog>
+                        <AlertDialog open={deleteConfirmationOpen && readingToDeleteId === reading.id} onOpenChange={setDeleteConfirmationOpen}>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleInitiateDelete(reading.id)}>
                               <Trash2 className="h-4 w-4" />
                               <span className="sr-only">Delete</span>
                             </Button>
@@ -108,9 +128,24 @@ export function ReadingsTable({ readings }: ReadingsTableProps) {
                                 This action cannot be undone. This will permanently delete this reading.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="secretCode" className="text-right">
+                                  Secret Code
+                                </Label>
+                                <Input
+                                  id="secretCode"
+                                  type="password"
+                                  value={secretCode}
+                                  onChange={(e) => setSecretCode(e.target.value)}
+                                  className="col-span-3"
+                                  placeholder="Enter secret code"
+                                />
+                              </div>
+                            </div>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(reading.id)}>
+                              <AlertDialogCancel onClick={() => setDeleteConfirmationOpen(false)}>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleDeleteConfirm}>
                                 Continue
                               </AlertDialogAction>
                             </AlertDialogFooter>

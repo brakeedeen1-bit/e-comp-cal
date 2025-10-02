@@ -39,6 +39,7 @@ const readingSchema = z.object({
   id: z.string().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
   value: z.coerce.number().min(1, 'Reading must be a positive number.'),
+  secretCode: z.string().min(1, 'Secret code is required.'), // New field
 });
 
 type ReadingFormProps = {
@@ -59,6 +60,7 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
       id: reading?.id || '',
       date: reading ? format(new Date(reading.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
       value: reading?.value || undefined,
+      secretCode: '', // Initialize secretCode
     },
   });
   
@@ -69,9 +71,10 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
             id: reading.id,
             date: format(new Date(reading.date), 'yyyy-MM-dd'),
             value: reading.value,
+            secretCode: '', // Keep secret code empty on edit
         });
     } else if (!isOpen) {
-        form.reset({ date: format(new Date(), 'yyyy-MM-dd'), value: undefined });
+        form.reset({ date: format(new Date(), 'yyyy-MM-dd'), value: undefined, secretCode: '' });
     }
   }, [isOpen, reading, form]);
 
@@ -98,7 +101,7 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
       onClose();
     }
     setIsDialogOpen(false);
-    form.reset({ date: format(new Date(), 'yyyy-MM-dd'), value: undefined });
+    form.reset({ date: format(new Date(), 'yyyy-MM-dd'), value: undefined, secretCode: '' });
   };
   
   const FormContent = (
@@ -160,6 +163,22 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
             )}
           />
         </div>
+        <FormField
+            control={form.control}
+            name="secretCode"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Secret Code</FormLabel>
+                    <FormControl>
+                        <Input type="password" placeholder="Enter secret code" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                        Enter the secret code to add or update readings.
+                    </FormDescription>
+                    <FormMessage>{(formState.errors as any)?.secretCode}</FormMessage>
+                </FormItem>
+            )}
+        />
          <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
             <Button type="submit">{isEditMode ? 'Save Changes' : 'Add Reading'}</Button>
