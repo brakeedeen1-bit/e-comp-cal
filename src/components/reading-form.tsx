@@ -59,7 +59,7 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
     defaultValues: {
       id: reading?.id || '',
       date: reading ? format(new Date(reading.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
-      value: reading?.value || undefined,
+      value: reading?.value || (isEditMode ? undefined : lastReadingValue), // Set default value for new readings
       secretCode: '', // Initialize secretCode
     },
   });
@@ -74,9 +74,9 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
             secretCode: '', // Keep secret code empty on edit
         });
     } else if (!isOpen) {
-        form.reset({ date: format(new Date(), 'yyyy-MM-dd'), value: undefined, secretCode: '' });
+        form.reset({ date: format(new Date(), 'yyyy-MM-dd'), value: lastReadingValue, secretCode: '' }); // Set default for new reading
     }
-  }, [isOpen, reading, form]);
+  }, [isOpen, reading, form, lastReadingValue]);
 
   const action = isEditMode ? updateReading : addReading;
   const [formState, formAction] = useFormState(action, { message: '' });
@@ -125,7 +125,7 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
       onClose();
     }
     setIsDialogOpen(false);
-    form.reset({ date: format(new Date(), 'yyyy-MM-dd'), value: undefined, secretCode: '' });
+    form.reset({ date: format(new Date(), 'yyyy-MM-dd'), value: lastReadingValue, secretCode: '' }); // Set default for new reading on close
   };
   
   const FormContent = (
@@ -166,7 +166,7 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
                 </Popover>
                 {/* Hidden input to ensure the date value is submitted with the form */}
                 <input type="hidden" {...field} value={field.value || ''} />
-                <FormMessage>{form.formState.errors.date?.message || (formState.message.includes('already exists') ? formState.message : '')}</FormMessage>
+                <FormMessage>{form.formState.errors.date?.message || (formState?.message?.includes('already exists') ? formState.message : '')}</FormMessage>
               </FormItem>
             )}
           />
@@ -182,7 +182,7 @@ export function ReadingForm({ reading, lastReadingValue, isOpen = false, onClose
                  <FormDescription>
                   Last reading: {lastReadingValue.toLocaleString()} kWh
                 </FormDescription>
-                <FormMessage>{form.formState.errors.value?.message || (formState.message.includes('less than the previous reading value') ? formState.message : '')}</FormMessage>
+                <FormMessage>{form.formState.errors.value?.message || (formState?.message?.includes('less than the previous reading value') ? formState.message : '')}</FormMessage>
               </FormItem>
             )}
           />
